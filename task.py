@@ -13,6 +13,8 @@ app = Flask(__name__)
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
+    context = {}
+
     if request.method == 'POST':
         data = request.form
 
@@ -62,7 +64,9 @@ def index():
         if response['status'] == 'SUCCESS':
             return redirect(url_for('thanks_page'))
 
-    return render_template('index.html')
+        context['error'] = response['status_message']
+
+    return render_template('index.html', **context)
 
 
 @app.route('/pay-type', methods=['GET'])

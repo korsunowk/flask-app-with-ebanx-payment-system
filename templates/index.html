@@ -22,15 +22,7 @@
             </span>
         </div>
         <input type="hidden" value="300" name="price">
-        <div class="block-amount">
-            <label for="amount">
-                Amount:
-            </label>
-            <span>
-                <input id="amount" name="amount" type="number" value="1" min="1" max="5">
-            </span>
-        </div>
-
+        <br>
         <div class="block-currency">
             <label for="currency">Currency</label>
             <select name="currency" id="currency">
@@ -39,65 +31,79 @@
                 <option value="USD">USD</option>
             </select>
         </div>
+
+        {% if error %}
+            <div class="error-block">
+                <span>
+                    {{ error }}
+                </span>
+            </div>
+        {% endif %}
+
         <h1>Client Details</h1>
-    <div class="block-details">
-        <label for="name">Name: </label>
-        <input type="text" placeholder="name" name="name">
-        <label for="bdate"> Birth date:
-            <input name="bdate" type="date">
-        </label>
-        <label for="cpf">
-            CPF:
-            <input type="text" name="cpf" value="853.513.468-93">
-        </label>
-    </div>
-    <h1>Client Contact Details</h1>
-    <div class="block-contact">
-        <label for="email">Email: </label>
-        <input type="email" placeholder="email" name="email">
-        <label for="phone">
-            Phone:
-            <input type="text" name="phone">
-        </label>
-    </div>
-    <div class="block-address">
-        <label for="address">
-            Address:
-            <input type="text" name="address">
-        </label>
-        <label for="street-number">
-            Street number:
-            <input type="text" name="street-number">
-        </label>
-        <label for="complement">
-            Complement:
-            <input type="text" name="complement">
-        </label>
-        <label for="city">
-            City:
-            <input type="text" name="city">
-        </label>
-        <label for="state">
-            State:
-            <select name="state" id="state">
-                <option value="Parana">
-                    Parana
-                </option>
-            </select>
-        </label>
-        <label for="zip">
-            ZIP:
-            <input type="text" name="zip">
-        </label>
-        <label for="country">
-            Country:
-            <select name="country" id="country">
-                <option value="BR">
-                    BR
-                </option>
-            </select>
-        </label>
-    </div>
+        <div class="block-details">
+            <label for="name">Name: </label>
+            <input type="text" placeholder="name" name="name">
+            <br>
+            <label for="bdate"> Birth date:
+                <input name="bdate" type="date">
+            </label>
+            <br>
+            <label for="cpf">
+                CPF:
+                <input type="text" name="cpf" value="853.513.468-93">
+            </label>
+        </div>
+        <h1>Client Contact Details</h1>
+        <div class="block-contact">
+            <label for="email">Email: </label>
+            <input type="email" placeholder="email" name="email">
+            <label for="phone">
+                Phone:
+                <input type="text" name="phone">
+            </label>
+        </div>
+        <div class="block-address">
+            <label for="address">
+                Address:
+                <input type="text" name="address">
+            </label>
+            <label for="street-number">
+                Street number:
+                <input type="text" name="street-number">
+            </label>
+            <br>
+            <label for="complement">
+                Complement:
+                <input type="text" name="complement">
+            </label>
+            <label for="city">
+                City:
+                <input type="text" name="city">
+            </label>
+            <br>
+            <label for="state">
+                State:
+                <select name="state" id="state">
+                    <option value="Parana">
+                        Parana
+                    </option>
+                </select>
+            </label>
+            <label for="zip">
+                ZIP:
+                <input type="text" name="zip">
+            </label>
+            <label for="country">
+                Country:
+                <select name="country" id="country">
+                    <option value="BR">
+                        BR
+                    </option>
+                </select>
+            </label>
+        </div>
+        <br>
         <label for="pay-type">
             Pay with:
             <select id="pay-type" name="pay-type" data-url="/pay-type">
@@ -106,6 +112,7 @@
                 <option value="credit-card">Credit Card</option>
             </select>
         </label>
+        <br>
         <button type="submit" id="submit" disabled="disabled">Submit</button>
     </form>
     <hr>
