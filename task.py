@@ -1,5 +1,5 @@
 from flask import Flask, render_template, \
-    request, json
+    request, json, redirect, url_for
 
 import requests
 import binascii
@@ -57,7 +57,11 @@ def index():
             })
         response = requests.post(settings.EBANX_API_PAYMENT_URL,
                                  data=json.dumps(body))
-        print(response.content)
+        response = json.loads(response.content.decode('utf-8'))
+
+        if response['status'] == 'SUCCESS':
+            return redirect(url_for('thanks_page'))
+
     return render_template('index.html')
 
 
@@ -73,6 +77,11 @@ def pay_type():
     )
 
     return response
+
+
+@app.route('/thanks')
+def thanks_page():
+    return render_template('thanks_page.html')
 
 
 if __name__ == '__main__':
