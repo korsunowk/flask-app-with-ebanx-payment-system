@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Index page</title>
+    <link href="/static/styles.css" rel="stylesheet">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="/static/scripts.js"></script>
+</head>
+<body>
+    <h1>Buy The Guitar</h1>
+    <hr>
+    <img src="/static/guitar.png" alt="guitar" height="150" width="500"/>
+    <hr>
+    <form action="" method="POST">
+        <div class="block-price">
+            <span>
+                Price of staff:
+            </span>
+            <span>
+                300$
+            </span>
+        </div>
+        <input type="hidden" value="300" name="price">
+        <div class="block-amount">
+            <label for="amount">
+                Amount:
+            </label>
+            <span>
+                <input id="amount" name="amount" type="number" value="1" min="1" max="5">
+            </span>
+        </div>
+
+        <div class="block-currency">
+            <label for="currency">Currency</label>
+            <select name="currency" id="currency">
+                <option value="USD">USD</option>
+                <option value="EUR">EURO</option>
+                <option value="BRL">BRL</option>
+            </select>
+        </div>
+
+        <label for="pay-type">
+            Pay with:
+            <select id="pay-type" name="pay-type" data-url="/pay-type">
+                <option value="">-------</option>
+                <option value="boleto">Boleto</option>
+                <option value="credit-card">Credit Card</option>
+            </select>
+        </label>
+        <button type="submit" id="submit" disabled="disabled">Submit</button>
+    </form>
+    <hr>
+</body>
+</html>
