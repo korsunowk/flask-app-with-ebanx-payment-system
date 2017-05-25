@@ -40,9 +40,9 @@ class BoletoTestCase(unittest.TestCase):
             }
         }
 
-    def testSuccessfullPayment(self):
+    def testSuccessfulPayment(self):
         """
-        Test simple successfull payment 
+        Test simple successful payment 
         """
         new_payment_code = binascii.hexlify(os.urandom(12)).decode('utf-8')
         self.body['payment']['merchant_payment_code'] = new_payment_code

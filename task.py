@@ -13,6 +13,9 @@ app = Flask(__name__)
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
+    """
+    Index page of application with payment form
+    """
     context = {}
 
     if request.method == 'POST':
@@ -71,6 +74,9 @@ def index():
 
 @app.route('/pay-type', methods=['GET'])
 def pay_type():
+    """
+    Send partial html with card information to index page for user
+    """
     response = app.response_class(
         response=json.dumps({
             'success': 'true',
@@ -85,6 +91,9 @@ def pay_type():
 
 @app.route('/thanks')
 def thanks_page():
+    """
+    Simple 'Thanks you' page for successful payments
+    """
     return render_template('thanks_page.html')
 
 
