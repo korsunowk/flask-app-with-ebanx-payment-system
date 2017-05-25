@@ -42,7 +42,7 @@ class BoletoTestCase(unittest.TestCase):
 
     def setNewMerchCode(self):
         """
-        Help method for set new merch code 
+        Help method for set new merchant payment code 
         (for payments needs only unique codes)
         """
         new_payment_code = binascii.hexlify(os.urandom(12)).decode('utf-8')
