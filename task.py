@@ -46,7 +46,7 @@ def index():
                 'amount_total': data.get('price'),
             }
         }
-        if data.get('pay-type', False) == 'credit-card':
+        if data.get('pay-type') == 'credit-card':
             body['payment'].update({
                 "payment_type_code": data.get('card-type'),
                 "creditcard": {
@@ -60,9 +60,8 @@ def index():
             body['payment'].update({
                 "payment_type_code": data.get('pay-type'),
             })
-        response = requests.post(settings.EBANX_API_PAYMENT_URL,
-                                 data=json.dumps(body))
-        response = json.loads(response.content.decode('utf-8'))
+
+        response = get_response_from_api(body)
 
         if response['status'] == 'SUCCESS':
             return redirect(url_for('thanks_page'))
@@ -70,6 +69,19 @@ def index():
         context['error'] = response['status_message']
 
     return render_template('index.html', **context)
+
+
+def get_response_from_api(body):
+    """
+    Help function to send data to EBANX API and get response from one
+    
+    :param body: dictionary with data which needed to api 
+    :return: response from EBANX api
+    """
+    response = requests.post(settings.EBANX_API_PAYMENT_URL,
+                             data=json.dumps(body))
+    response = json.loads(response.content.decode('utf-8'))
+    return response
 
 
 @app.route('/pay-type', methods=['GET'])
@@ -98,4 +110,4 @@ def thanks_page():
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8001)
+    app.run()

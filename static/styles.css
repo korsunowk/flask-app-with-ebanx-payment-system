@@ -8,7 +8,7 @@ body {
     font-size: 18px;
 }
 
-input {
+input, select {
     font-size: 16px;
     margin-top: 10px;
 }
@@ -49,5 +49,5 @@ button#submit:not([disabled]), .thanks-button {
 
 .thanks-button {
     font-size: 24px;
-    width: 200px;
+    width: 250px;
 }
