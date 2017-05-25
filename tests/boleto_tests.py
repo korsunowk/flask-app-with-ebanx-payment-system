@@ -40,12 +40,19 @@ class BoletoTestCase(unittest.TestCase):
             }
         }
 
+    def setNewMerchCode(self):
+        """
+        Help method for set new merch code 
+        (for payments needs only unique codes)
+        """
+        new_payment_code = binascii.hexlify(os.urandom(12)).decode('utf-8')
+        self.body['payment']['merchant_payment_code'] = new_payment_code
+
     def testSuccessfulPayment(self):
         """
         Test simple successful payment 
         """
-        new_payment_code = binascii.hexlify(os.urandom(12)).decode('utf-8')
-        self.body['payment']['merchant_payment_code'] = new_payment_code
+        self.setNewMerchCode()
 
         response = requests.post(self.url, json.dumps(self.body))
 
@@ -64,8 +71,7 @@ class BoletoTestCase(unittest.TestCase):
         """
         Test with incorrect birth date
         """
-        new_payment_code = binascii.hexlify(os.urandom(12)).decode('utf-8')
-        self.body['payment']['merchant_payment_code'] = new_payment_code
+        self.setNewMerchCode()
         self.body['payment']["birth_date"] = '21/21/2040'
 
         response = requests.post(self.url, json.dumps(self.body))
@@ -76,9 +82,19 @@ class BoletoTestCase(unittest.TestCase):
         """
         Test with incorrect document number
         """
-        new_payment_code = binascii.hexlify(os.urandom(12)).decode('utf-8')
-        self.body['payment']['merchant_payment_code'] = new_payment_code
+        self.setNewMerchCode()
         self.body['payment']['document'] = 'document'
+
+        response = requests.post(self.url, json.dumps(self.body))
+        response = json.loads(response.content.decode('utf-8'))
+        self.assertEqual(response['status'], 'ERROR')
+
+    def testIncorrectApiKey(self):
+        """
+        Test payment with incorrect api key
+        """
+        self.body['integration_key'] = 'incorrect_key'
+        self.setNewMerchCode()
 
         response = requests.post(self.url, json.dumps(self.body))
         response = json.loads(response.content.decode('utf-8'))
