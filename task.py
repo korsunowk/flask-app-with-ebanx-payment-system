@@ -2,6 +2,8 @@ from flask import Flask, render_template, \
     request, json
 
 import requests
+import binascii
+import os
 
 import settings
 
@@ -14,43 +16,48 @@ def index():
     if request.method == 'POST':
         data = request.form
 
+        # random staff code
+        merchant_payment_code \
+            = binascii.hexlify(os.urandom(12)).decode('utf-8')
+
         body = {
             'integration_key': settings.INTEGRATION_KEY,
             'operation': 'request',
-            'payment': dict()
-        }
-        print(data)
-        if data.get('pay-type', False) == 'credit-card':
-            body['payment'] = {
-                'amount_total': '300',
-                "currency_code": "BRL",
-                "merchant_payment_code": "test_payment_code",
-                "payment_type_code": data.get('card-type'),
+            'payment': {
+                "email": data.get('email'),
+                "name": data.get('name'),
+                "country": data.get('country'),
+                "document": data.get('cpf'),
+                "zipcode": data.get('zip'),
+                "address": data.get('address'),
+                "street_number": data.get('street-number'),
+                "city": data.get('city'),
+                "state": data.get('state'),
+                "phone_number": data.get('phone'),
+                "birth_date": data.get('bdate'),
 
-                "email": "test@mail.ru",
-                "name": "ehrr",
-                "document": "853.513.468-93",
-                "zipcode": "61919-230",
-                "address": "eprogqerg",
-                "street_number": "324",
-                "city": "rewgr",
-                "state": 'CE',
-                "country": "BR",
-                "phone_number": "8522847035",
-
-                "creditcard": {
-                    'card_number': data.get('card-number'),
-                    'card_name': data.get('card-name'),
-                    'card_due_date': '12/2019',
-                    'card_cvv': data.get('card-cvv')
-                }
+                "merchant_payment_code": merchant_payment_code,
+                "currency_code": data.get('currency'),
+                'amount_total': data.get('price'),
             }
-            response = requests.post(settings.EBANX_API_PAYMENT_URL,
-                                     data=json.dumps(body))
-            print(response.content)
+        }
+        if data.get('pay-type', False) == 'credit-card':
+            body['payment'].update({
+                "payment_type_code": data.get('card-type'),
+                "creditcard": {
+                        'card_number': data.get('card-number'),
+                        'card_name': data.get('card-name'),
+                        'card_due_date': data.get('card-date'),
+                        'card_cvv': data.get('card-cvv')
+                    }
+                })
         else:
-            pass
-
+            body['payment'].update({
+                "payment_type_code": data.get('pay-type'),
+            })
+        response = requests.post(settings.EBANX_API_PAYMENT_URL,
+                                 data=json.dumps(body))
+        print(response.content)
     return render_template('index.html')
 
 

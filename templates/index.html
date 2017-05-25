@@ -34,12 +34,70 @@
         <div class="block-currency">
             <label for="currency">Currency</label>
             <select name="currency" id="currency">
-                <option value="USD">USD</option>
-                <option value="EUR">EURO</option>
                 <option value="BRL">BRL</option>
+                <option value="EUR">EURO</option>
+                <option value="USD">USD</option>
             </select>
         </div>
-
+        <h1>Client Details</h1>
+    <div class="block-details">
+        <label for="name">Name: </label>
+        <input type="text" placeholder="name" name="name">
+        <label for="bdate"> Birth date:
+            <input name="bdate" type="date">
+        </label>
+        <label for="cpf">
+            CPF:
+            <input type="text" name="cpf" value="853.513.468-93">
+        </label>
+    </div>
+    <h1>Client Contact Details</h1>
+    <div class="block-contact">
+        <label for="email">Email: </label>
+        <input type="email" placeholder="email" name="email">
+        <label for="phone">
+            Phone:
+            <input type="text" name="phone">
+        </label>
+    </div>
+    <div class="block-address">
+        <label for="address">
+            Address:
+            <input type="text" name="address">
+        </label>
+        <label for="street-number">
+            Street number:
+            <input type="text" name="street-number">
+        </label>
+        <label for="complement">
+            Complement:
+            <input type="text" name="complement">
+        </label>
+        <label for="city">
+            City:
+            <input type="text" name="city">
+        </label>
+        <label for="state">
+            State:
+            <select name="state" id="state">
+                <option value="Parana">
+                    Parana
+                </option>
+            </select>
+        </label>
+        <label for="zip">
+            ZIP:
+            <input type="text" name="zip">
+        </label>
+        <label for="country">
+            Country:
+            <select name="country" id="country">
+                <option value="BR">
+                    BR
+                </option>
+            </select>
+        </label>
+    </div>
         <label for="pay-type">
             Pay with:
             <select id="pay-type" name="pay-type" data-url="/pay-type">
