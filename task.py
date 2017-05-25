@@ -63,19 +63,15 @@ def index():
 
 @app.route('/pay-type', methods=['GET'])
 def pay_type():
-    template = render_template('partials/card-info-block.html')
-
-    if request.args.get('pay-type', False) == 'boleto':
-        template = render_template('partials/boleto-info-block.html')
-
     response = app.response_class(
         response=json.dumps({
             'success': 'true',
-            'template': template
+            'template': render_template('partials/card-info-block.html')
         }),
         status=200,
         mimetype='application/json'
     )
+
     return response
 
 

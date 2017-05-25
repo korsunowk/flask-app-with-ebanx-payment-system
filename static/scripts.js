@@ -3,7 +3,7 @@ $(document).ready(function() {
     $('#pay-type').on('change', function () {
         var type = $(this).val();
 
-        if (type !== '' && type !== undefined ) {
+        if (type === 'credit-card') {
             $.ajax({
                 url: $(this).data('url'),
                 type: 'get',
@@ -20,6 +20,10 @@ $(document).ready(function() {
                     }
                 }
             })
+        }
+        else if (type === 'boleto') {
+            $('.open').remove();
+            $('#submit').removeAttr('disabled');
         }
         else {
             $('.open').remove();
