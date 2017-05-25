@@ -46,3 +46,8 @@ button#submit:not([disabled]), .thanks-button {
     font-size: 20px;
     color: red;
 }
+
+.thanks-button {
+    font-size: 24px;
+    width: 200px;
+}
