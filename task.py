@@ -5,8 +5,6 @@ import requests
 import binascii
 import os
 import sqlite3
-import copy
-import pprint
 
 import settings
 
