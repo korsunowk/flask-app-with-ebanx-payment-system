@@ -49,24 +49,33 @@ def write_purchase_to_db(data):
 @app.teardown_appcontext
 def create_database_table(exception):
     """
-    Create initial database table
+    Create initial database table for save info about purchases
     """
-    table1 = """
+    sql = """
         CREATE TABLE IF NOT EXISTS purchases (
              ID INTEGER PRIMARY KEY autoincrement,
-             purchase_hash string
+             purchase_hash string,
+             card_token string,
+             operation string,
+             email string,
+             name string,
+             country string,
+             document string,
+             zipcode string,
+             address string,
+             street_number string,
+             city string,
+             state string,
+             phone_number string,
+             birth_date string,
+             currency_code string,
+             amount_total string,
+             payment_type_code string
             );
     """
-    table2 = """
-        CREATE TABLE IF NOT EXISTS card_tokens (
-            ID INTEGER PRIMARY KEY autoincrement,
-            card_token string
-        );
-    """
 
-    for sql in [table1, table2]:
-        get_db().execute(sql)
-        get_db().commit()
+    get_db().execute(sql)
+    get_db().commit()
 
 
 def write_card_token_to_db(token):
@@ -126,8 +135,8 @@ def index():
             })
 
             reccuryng_body = {
-                "integration_key": body['integration_key'],
-                "payment_type_code": body['payment']['payment_type_code'],
+                "integration_key": settings.INTEGRATION_KEY,
+                "payment_type_code": data.get('card-type'),
                 "creditcard": body['payment']['creditcard']
             }
 
