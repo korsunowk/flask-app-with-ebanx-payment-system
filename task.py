@@ -43,7 +43,30 @@ def write_purchase_to_db(data):
     Function for write new purchase information to database
     :param data: all information about purchase
     """
-    pass
+    payment = data.get('payment')
+    cursor = get_db().cursor()
+    sql = "INSERT INTO purchases (operation, email, name, " \
+          "country, document, zipcode, address, street_number, " \
+          "city, state, phone_number, birth_date, " \
+          "currency_code, amount_total, payment_type_code)" \
+          " VALUES ('{0}', '{1}', '{2}', '{3}'," \
+          "'{4}', '{5}', '{6}', '{7}'," \
+          "'{8}', '{9}', '{10}', '{11}'," \
+          "'{12}', '{13}', '{14}')"\
+        .format(
+            data.get('operation'), payment.get('email'), payment.get('name'),
+            payment.get('country'), payment.get('document'),
+            payment.get('zipcode'), payment.get('address'),
+            payment.get('street_number'), payment.get('city'),
+            payment.get('state'), payment.get('phone_number'),
+            payment.get('birth_date'), payment.get('currency_code'),
+            payment.get('amount_total'), payment.get('payment_type_code')
+        )
+    get_db().execute(sql)
+    get_db().commit()
+
+    print('Last row id %s' % cursor.lastrowid)
+    return cursor.lastrowid
 
 
 @app.teardown_appcontext
@@ -94,6 +117,7 @@ def index():
     Index page of application with payment form
     """
     context = {}
+    purchase_id = None
 
     if request.method == 'POST':
         data = request.form
@@ -148,17 +172,21 @@ def index():
                 new_body['payment']['creditcard'] = response['token']
 
                 # TODO write new_body to database
+                purchase_id = write_purchase_to_db(new_body)
         else:
             body['payment'].update({
                 "payment_type_code": data.get('pay-type'),
             })
+            purchase_id = write_purchase_to_db(body)
 
         response = get_response_from_api(body=body,
                                          url=settings.EBANX_API_PAYMENT_URL)
 
         if response['status'] == 'SUCCESS':
             # TODO write_purchase_hash_to_db(response['payment']['hash'])
-            context['purchase_hash'] = response['payment']['hash']
+            write_purchase_hash_to_db(purchase=purchase_id,
+                                      hash_code=response['payment']['hash'])
+            context['purchase_id'] = purchase_id
 
             return render_template('thanks_page.html', **context)
 
@@ -223,11 +251,20 @@ def cancelled_page():
     return render_template('cancelled_page.html')
 
 
-@app.route('/cancel/<purchase_hash>')
-def cancel_payment(purchase_hash):
+def get_purchase_hash_from_db(purchase_id):
+    cursor = get_db().cursor()
+    sql = "SELECT purchase_hash FROM purchases WHERE ID=%s" % purchase_id
+    cursor.execute(sql)
+    return cursor.fetchone()
+
+
+@app.route('/cancel/<purchase_id>')
+def cancel_payment(purchase_id):
     """
     Cancel previous payment, if it possible
     """
+    purchase_hash = get_purchase_hash_from_db(purchase_id)
+
     body = {
         'integration_key': settings.INTEGRATION_KEY,
         'hash': purchase_hash
