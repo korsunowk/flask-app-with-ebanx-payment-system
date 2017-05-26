@@ -13,60 +13,70 @@ import settings
 app = Flask(__name__)
 
 
-# def get_db():
-#     db = getattr(g, '_database', None)
-#     if db is None:
-#         db = g._database = sqlite3.connect(settings.DATABASE)
-#     return db
-#
-#
-# @app.teardown_appcontext
-# def close_connection(exception):
-#     db = getattr(g, '_database', None)
-#     if db is not None:
-#         db.close()
-
-#
-# def write_purchase_hash_to_db(hash_code):
-#     """
-#     Function for write new purchase hash code to database
-#     """
-#     cursor = get_db().cursor()
-#     sql = "Insert INTO purchases (purchase_hash) VALUES ('%s')" % hash_code
-#     cursor.execute(sql)
-#     get_db().commit()
-#
-#
-# @app.teardown_appcontext
-# def create_database_table(exception):
-#     """
-#     Create initial database table
-#     """
-#     table1 = """
-#         CREATE TABLE IF NOT EXISTS purchases (
-#              ID INTEGER PRIMARY KEY autoincrement,
-#              purchase_hash string
-#             );
-#     """
-#     table2 = """
-#         CREATE TABLE IF NOT EXISTS card_tokens (
-#             ID INTEGER PRIMARY KEY autoincrement,
-#             card_token string
-#         );
-#     """
-#
-#     for sql in [table1, table2]:
-#         get_db().execute(sql)
-#         get_db().commit()
+def get_db():
+    db = getattr(g, '_database', None)
+    if db is None:
+        db = g._database = sqlite3.connect(settings.DATABASE)
+    return db
 
 
-# def write_card_token_to_db(token):
-#     """
-#     Function for write new token of card to database
-#     """
-#     sql = "Insert INTO purchases (card_token) VALUES ('%s')" % token
-#     get_db().execute(sql)
-#     get_db().commit()
+@app.teardown_appcontext
+def close_connection(exception):
+    db = getattr(g, '_database', None)
+    if db is not None:
+        db.close()
+
+
+def write_purchase_hash_to_db(purchase, hash_code):
+    """
+    Function for write new purchase hash code to database
+    """
+    cursor = get_db().cursor()
+    # TODO change to UPDATE SET
+    sql = "Insert INTO purchases (purchase_hash) VALUES ('%s')" % hash_code
+    cursor.execute(sql)
+    get_db().commit()
+
+
+def write_purchase_to_db(data):
+    """
+    Function for write new purchase information to database
+    :param data: all information about purchase
+    """
+    pass
+
+
+@app.teardown_appcontext
+def create_database_table(exception):
+    """
+    Create initial database table
+    """
+    table1 = """
+        CREATE TABLE IF NOT EXISTS purchases (
+             ID INTEGER PRIMARY KEY autoincrement,
+             purchase_hash string
+            );
+    """
+    table2 = """
+        CREATE TABLE IF NOT EXISTS card_tokens (
+            ID INTEGER PRIMARY KEY autoincrement,
+            card_token string
+        );
+    """
+
+    for sql in [table1, table2]:
+        get_db().execute(sql)
+        get_db().commit()
+
+
+def write_card_token_to_db(token):
+    """
+    Function for write new token of card to database
+    """
+    # TODO change to UPDATE SET
+    sql = "Insert INTO purchases (card_token) VALUES ('%s')" % token
+    get_db().execute(sql)
+    get_db().commit()
 
 
 @app.route('/', methods=['GET', 'POST'])
