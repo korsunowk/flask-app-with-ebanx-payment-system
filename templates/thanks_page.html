@@ -9,6 +9,14 @@
     <h1 class="thanks-header">
         Thank You For Your Purchase!
     </h1>
+    {% if buy_one_more %}
+        <form action="/buy_one_more" method="post">
+            <input type="hidden" name="previous">
+            <button type="submit">
+                Buy one more Thing!
+            </button>
+        </form>
+    {% endif %}
     <a href="/cancel/{{ purchase_hash }}" class="thanks-button">
         Cancel last payment
     </a>

@@ -5,6 +5,8 @@ import requests
 import binascii
 import os
 import sqlite3
+import copy
+import pprint
 
 import settings
 
@@ -112,6 +114,21 @@ def index():
                     'card_cvv': data.get('card-cvv')
                 }
             })
+
+            reccuryng_body = {
+                "integration_key": body['integration_key'],
+                "payment_type_code": body['payment']['payment_type_code'],
+                "creditcard": body['payment']['creditcard']
+            }
+
+            response = get_response_from_api(body=reccuryng_body,
+                                             url=settings.EBANX_API_TOKEN_URL)
+
+            if response['status'] == 'SUCCESS':
+                new_body = copy.deepcopy(body)
+                new_body['payment']['creditcard'] = response['token']
+
+                # TODO write new_body to database
         else:
             body['payment'].update({
                 "payment_type_code": data.get('pay-type'),
@@ -121,7 +138,7 @@ def index():
                                          url=settings.EBANX_API_PAYMENT_URL)
 
         if response['status'] == 'SUCCESS':
-            # write_purchase_hash_to_db(response['payment']['hash'])
+            # TODO write_purchase_hash_to_db(response['payment']['hash'])
             context['purchase_hash'] = response['payment']['hash']
 
             return render_template('thanks_page.html', **context)
@@ -129,6 +146,23 @@ def index():
         context['error'] = response['status_message']
 
     return render_template('index.html', **context)
+
+
+@app.route('/buy_one_more', methods=['POST'])
+def buy_one_more():
+    """
+    Method for buy one more staff with card token instead full info
+    """
+    data = 'nothing'
+    response = get_response_from_api(body=data,
+                                     url=settings.EBANX_API_PAYMENT_URL)
+
+    pprint.pprint(response)
+
+    if response['status'] == 'SUCCESS':
+        return render_template('thanks_page.html')
+
+    return render_template('index.html')
 
 
 def get_response_from_api(body, url):
@@ -183,7 +217,7 @@ def cancel_payment(purchase_hash):
     response = get_response_from_api(body=body,
                                      url=settings.EBANX_API_CANCEL_URL)
 
-    if response['status'] is 'SUCCESS':
+    if response['status'] == 'SUCCESS':
         return redirect(url_for('cancelled_page'))
 
     return redirect(url_for('index'))
