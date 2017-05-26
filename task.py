@@ -122,9 +122,7 @@ def index():
     if request.method == 'POST':
         data = request.form
 
-        # random staff code
-        merchant_payment_code \
-            = binascii.hexlify(os.urandom(12)).decode('utf-8')
+        merchant_payment_code = generate_merchant_payment_code()
         amount_total = int(data.get('price')) * int(data.get('amount'))
         body = {
             'integration_key': settings.INTEGRATION_KEY,
@@ -170,6 +168,7 @@ def index():
             if response['status'] == 'SUCCESS':
                 purchase_id = write_purchase_to_db(body)
                 write_card_token_to_db(purchase_id, response['token'])
+                context['buy_one_more'] = True
 
         else:
             body['payment'].update({
@@ -192,21 +191,65 @@ def index():
     return render_template('index.html', **context)
 
 
-@app.route('/buy_one_more', methods=['POST'])
-def buy_one_more():
+def get_purchase_data_from_db(purchase_id):
+    """
+    Get all information about purchase from database
+    :param purchase_id: INT id of purchase
+    :return: all information from database about that purchase
+    """
+    cursor = get_db().cursor()
+    cursor.execute(
+        "SELECT * FROM purchases WHERE ID=%s" % purchase_id)
+    return cursor.fetchone()
+
+
+def generate_merchant_payment_code():
+    """
+    Generate random code for merchant payment
+    :return: new random hash code
+    """
+    return binascii.hexlify(os.urandom(12)).decode('utf-8')
+
+
+@app.route('/buy_one_more/<purchase_id>', methods=['POST'])
+def buy_one_more(purchase_id):
     """
     Method for buy one more staff with card token instead full info
     """
-    data = 'nothing'
-    response = get_response_from_api(body=data,
-                                     url=settings.EBANX_API_PAYMENT_URL)
+    data = get_purchase_data_from_db(purchase_id)
 
-    pprint.pprint(response)
+    body = {
+        "integration_key": settings.INTEGRATION_KEY,
+        "operation": data[3],
+        "mode": "full",
+        "payment": {
+            "merchant_payment_code": generate_merchant_payment_code(),
+            "amount_total": data[16],
+            "currency_code": data[15],
+            "name": data[5],
+            "email": data[4],
+            "birth_date": data[14],
+            "document": data[7],
+            "address": data[9],
+            "street_number": data[10],
+            "city": data[11],
+            "state": data[12],
+            "zipcode": data[8],
+            "country": data[6],
+            "phone_number": data[13],
+            "payment_type_code": data[17],
+            "creditcard": {
+                "token": data[2]
+            }
+        }
+    }
+    response = get_response_from_api(body=body,
+                                     url=settings.EBANX_API_PAYMENT_URL)
 
     if response['status'] == 'SUCCESS':
         return render_template('thanks_page.html')
 
-    return render_template('index.html')
+    return redirect(url_for('index'))
 
 
 def get_response_from_api(body, url):
@@ -252,7 +295,7 @@ def get_purchase_hash_from_db(purchase_id):
     cursor = get_db().cursor()
     sql = "SELECT purchase_hash FROM purchases WHERE ID=%s" % purchase_id
     cursor.execute(sql)
-    return cursor.fetchone()
+    return cursor.fetchone()[0]
 
 
 @app.route('/cancel/<purchase_id>')

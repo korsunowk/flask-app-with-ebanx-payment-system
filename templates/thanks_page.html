@@ -10,7 +10,7 @@
         Thank You For Your Purchase!
     </h1>
     {% if buy_one_more %}
-        <form action="/buy_one_more" method="post">
+        <form action="/buy_one_more/{{ purchase_id }}" method="post">
             <input type="hidden" name="previous">
             <button type="submit">
                 Buy one more Thing!
