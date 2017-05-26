@@ -1,13 +1,70 @@
 from flask import Flask, render_template, \
-    request, json, redirect, url_for
+    request, json, redirect, url_for, g
 
 import requests
 import binascii
 import os
+import sqlite3
 
 import settings
 
 app = Flask(__name__)
+
+
+# def get_db():
+#     db = getattr(g, '_database', None)
+#     if db is None:
+#         db = g._database = sqlite3.connect(settings.DATABASE)
+#     return db
+#
+#
+# @app.teardown_appcontext
+# def close_connection(exception):
+#     db = getattr(g, '_database', None)
+#     if db is not None:
+#         db.close()
+
+#
+# def write_purchase_hash_to_db(hash_code):
+#     """
+#     Function for write new purchase hash code to database
+#     """
+#     cursor = get_db().cursor()
+#     sql = "Insert INTO purchases (purchase_hash) VALUES ('%s')" % hash_code
+#     cursor.execute(sql)
+#     get_db().commit()
+#
+#
+# @app.teardown_appcontext
+# def create_database_table(exception):
+#     """
+#     Create initial database table
+#     """
+#     table1 = """
+#         CREATE TABLE IF NOT EXISTS purchases (
+#              ID INTEGER PRIMARY KEY autoincrement,
+#              purchase_hash string
+#             );
+#     """
+#     table2 = """
+#         CREATE TABLE IF NOT EXISTS card_tokens (
+#             ID INTEGER PRIMARY KEY autoincrement,
+#             card_token string
+#         );
+#     """
+#
+#     for sql in [table1, table2]:
+#         get_db().execute(sql)
+#         get_db().commit()
+
+
+# def write_card_token_to_db(token):
+#     """
+#     Function for write new token of card to database
+#     """
+#     sql = "Insert INTO purchases (card_token) VALUES ('%s')" % token
+#     get_db().execute(sql)
+#     get_db().commit()
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -60,24 +117,29 @@ def index():
                 "payment_type_code": data.get('pay-type'),
             })
 
-        response = get_response_from_api(body)
+        response = get_response_from_api(body=body,
+                                         url=settings.EBANX_API_PAYMENT_URL)
 
         if response['status'] == 'SUCCESS':
-            return redirect(url_for('thanks_page'))
+            # write_purchase_hash_to_db(response['payment']['hash'])
+            context['purchase_hash'] = response['payment']['hash']
+
+            return render_template('thanks_page.html', **context)
 
         context['error'] = response['status_message']
 
     return render_template('index.html', **context)
 
 
-def get_response_from_api(body):
+def get_response_from_api(body, url):
     """
     Help function to send data to EBANX API and get response from one
     
-    :param body: dictionary with data which needed to api 
+    :param body: dictionary with data which needed to api
+    :param url: url of api
     :return: response from EBANX api
     """
-    response = requests.post(settings.EBANX_API_PAYMENT_URL,
+    response = requests.post(url=url,
                              data=json.dumps(body))
     response = json.loads(response.content.decode('utf-8'))
     return response
@@ -100,12 +162,31 @@ def pay_type():
     return response
 
 
-@app.route('/thanks')
-def thanks_page():
+@app.route('/cancelled')
+def cancelled_page():
     """
-    Simple 'Thanks you' page for successful payments
+    Simple page for display info of cancelled purchase
     """
-    return render_template('thanks_page.html')
+    return render_template('cancelled_page.html')
+
+
+@app.route('/cancel/<purchase_hash>')
+def cancel_payment(purchase_hash):
+    """
+    Cancel previous payment, if it possible
+    """
+    body = {
+        'integration_key': settings.INTEGRATION_KEY,
+        'hash': purchase_hash
+    }
+
+    response = get_response_from_api(body=body,
+                                     url=settings.EBANX_API_CANCEL_URL)
+
+    if response['status'] is 'SUCCESS':
+        return redirect(url_for('cancelled_page'))
+
+    return redirect(url_for('index'))
 
 
 if __name__ == '__main__':
