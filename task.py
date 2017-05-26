@@ -7,7 +7,6 @@ import os
 
 import settings
 
-
 app = Flask(__name__)
 
 
@@ -24,7 +23,7 @@ def index():
         # random staff code
         merchant_payment_code \
             = binascii.hexlify(os.urandom(12)).decode('utf-8')
-
+        amount_total = int(data.get('price')) * int(data.get('amount'))
         body = {
             'integration_key': settings.INTEGRATION_KEY,
             'operation': 'request',
@@ -43,19 +42,19 @@ def index():
 
                 "merchant_payment_code": merchant_payment_code,
                 "currency_code": data.get('currency'),
-                'amount_total': data.get('price'),
+                'amount_total': amount_total,
             }
         }
         if data.get('pay-type') == 'credit-card':
             body['payment'].update({
                 "payment_type_code": data.get('card-type'),
                 "creditcard": {
-                        'card_number': data.get('card-number'),
-                        'card_name': data.get('card-name'),
-                        'card_due_date': data.get('card-date'),
-                        'card_cvv': data.get('card-cvv')
-                    }
-                })
+                    'card_number': data.get('card-number'),
+                    'card_name': data.get('card-name'),
+                    'card_due_date': data.get('card-date'),
+                    'card_cvv': data.get('card-cvv')
+                }
+            })
         else:
             body['payment'].update({
                 "payment_type_code": data.get('pay-type'),
