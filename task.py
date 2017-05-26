@@ -33,7 +33,8 @@ def write_purchase_hash_to_db(purchase, hash_code):
     """
     cursor = get_db().cursor()
     # TODO change to UPDATE SET
-    sql = "Insert INTO purchases (purchase_hash) VALUES ('%s')" % hash_code
+    sql = "UPDATE purchases SET purchase_hash='{0}' WHERE ID={1}"\
+          .format(hash_code, purchase)
     cursor.execute(sql)
     get_db().commit()
 
@@ -62,10 +63,8 @@ def write_purchase_to_db(data):
             payment.get('birth_date'), payment.get('currency_code'),
             payment.get('amount_total'), payment.get('payment_type_code')
         )
-    get_db().execute(sql)
-    get_db().commit()
+    cursor.execute(sql)
 
-    print('Last row id %s' % cursor.lastrowid)
     return cursor.lastrowid
 
 
@@ -101,12 +100,13 @@ def create_database_table(exception):
     get_db().commit()
 
 
-def write_card_token_to_db(token):
+def write_card_token_to_db(purchase_id, token):
     """
     Function for write new token of card to database
     """
     # TODO change to UPDATE SET
-    sql = "Insert INTO purchases (card_token) VALUES ('%s')" % token
+    sql = "UPDATE purchases SET card_token='%s' WHERE ID=%d" \
+          % (token, purchase_id)
     get_db().execute(sql)
     get_db().commit()
 
@@ -168,11 +168,9 @@ def index():
                                              url=settings.EBANX_API_TOKEN_URL)
 
             if response['status'] == 'SUCCESS':
-                new_body = copy.deepcopy(body)
-                new_body['payment']['creditcard'] = response['token']
+                purchase_id = write_purchase_to_db(body)
+                write_card_token_to_db(purchase_id, response['token'])
 
-                # TODO write new_body to database
-                purchase_id = write_purchase_to_db(new_body)
         else:
             body['payment'].update({
                 "payment_type_code": data.get('pay-type'),
@@ -183,7 +181,6 @@ def index():
                                          url=settings.EBANX_API_PAYMENT_URL)
 
         if response['status'] == 'SUCCESS':
-            # TODO write_purchase_hash_to_db(response['payment']['hash'])
             write_purchase_hash_to_db(purchase=purchase_id,
                                       hash_code=response['payment']['hash'])
             context['purchase_id'] = purchase_id
