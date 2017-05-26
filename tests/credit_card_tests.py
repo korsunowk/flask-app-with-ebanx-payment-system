@@ -14,7 +14,7 @@ class CreditCardTestCase(unittest.TestCase):
         Set up initial values for tests
         """
 
-        self.key = 'test_ik_lTp-YAT16nvn74DXKFFoYw'
+        self.key = '*********************************'
         self.url = 'https://sandbox.ebanx.com/ws/direct'
 
         self.body = {
