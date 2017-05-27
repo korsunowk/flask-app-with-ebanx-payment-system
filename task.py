@@ -12,6 +12,11 @@ app = Flask(__name__)
 
 
 def get_db():
+    """
+    Helper function for create connection with database
+    and return database connection object for use one
+    :return: database connection object
+    """
     db = getattr(g, '_database', None)
     if db is None:
         db = g._database = sqlite3.connect(settings.DATABASE)
@@ -20,6 +25,10 @@ def get_db():
 
 @app.teardown_appcontext
 def close_connection(exception):
+    """
+    Helper function for close connection with database
+    :param exception: exception which send flask app
+    """
     db = getattr(g, '_database', None)
     if db is not None:
         db.close()
