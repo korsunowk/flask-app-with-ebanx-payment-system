@@ -222,6 +222,8 @@ def generate_merchant_payment_code():
 def buy_one_more(purchase_id):
     """
     Method for buy one more staff with card token instead full info
+
+    :param purchase_id: INT id of purchase object in database
     """
     data = get_purchase_data_from_db(purchase_id)
 
@@ -299,6 +301,12 @@ def cancelled_page():
 
 
 def get_purchase_hash_from_db(purchase_id):
+    """
+    Helper function for get purchase object from database
+
+    :param purchase_id: INT id of purchase object
+    :return: database row with purchase object
+    """
     cursor = get_db().cursor()
     sql = "SELECT purchase_hash FROM purchases WHERE ID=%s" % purchase_id
     cursor.execute(sql)
@@ -309,6 +317,8 @@ def get_purchase_hash_from_db(purchase_id):
 def cancel_payment(purchase_id):
     """
     Cancel previous payment, if it possible
+
+    :param purchase_id: INT id of purchase object in database
     """
     purchase_hash = get_purchase_hash_from_db(purchase_id)
 
