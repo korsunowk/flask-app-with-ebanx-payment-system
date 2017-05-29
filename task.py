@@ -18,7 +18,7 @@ def get_db():
     :return: database connection object
     """
     db = getattr(g, '_database', None)
-    if db is None:
+    if not db:
         db = g._database = sqlite3.connect(settings.DATABASE)
     return db
 
@@ -30,7 +30,7 @@ def close_connection(exception):
     :param exception: exception which send flask app
     """
     db = getattr(g, '_database', None)
-    if db is not None:
+    if db:
         db.close()
 
 
@@ -39,7 +39,6 @@ def write_purchase_hash_to_db(purchase, hash_code):
     Function for write new purchase hash code to database
     """
     cursor = get_db().cursor()
-    # TODO change to UPDATE SET
     sql = "UPDATE purchases SET purchase_hash='{0}' WHERE ID={1}"\
           .format(hash_code, purchase)
     cursor.execute(sql)
@@ -111,7 +110,6 @@ def write_card_token_to_db(purchase_id, token):
     """
     Function for write new token of card to database
     """
-    # TODO change to UPDATE SET
     sql = "UPDATE purchases SET card_token='%s' WHERE ID=%d" \
           % (token, purchase_id)
     get_db().execute(sql)
@@ -261,16 +259,20 @@ def buy_one_more(purchase_id):
     return redirect(url_for('index'))
 
 
-def get_response_from_api(body, url):
+def get_response_from_api(body, url, method='post'):
     """
     Help function to send data to EBANX API and get response from one
     
     :param body: dictionary with data which needed to api
     :param url: url of api
+    :param method: HTTP method for request
     :return: response from EBANX api
     """
-    response = requests.post(url=url,
-                             data=json.dumps(body))
+    if method == 'get':
+        response = requests.get(url=url, params=body)
+    else:
+        response = requests.post(url=url,
+                                 data=json.dumps(body))
     response = json.loads(response.content.decode('utf-8'))
     return response
 
@@ -328,7 +330,8 @@ def cancel_payment(purchase_id):
     }
 
     response = get_response_from_api(body=body,
-                                     url=settings.EBANX_API_CANCEL_URL)
+                                     url=settings.EBANX_API_CANCEL_URL,
+                                     method='get')
 
     if response['status'] == 'SUCCESS':
         return redirect(url_for('cancelled_page'))
