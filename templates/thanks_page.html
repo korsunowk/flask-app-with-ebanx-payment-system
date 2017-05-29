@@ -9,17 +9,18 @@
     <h1 class="thanks-header">
         Thank You For Your Purchase!
     </h1>
-    {% if buy_one_more %}
+    {% if card_payment %}
         <form action="/buy_one_more/{{ purchase_id }}" method="post">
             <input type="hidden" name="previous">
             <button type="submit">
                 Buy one more Thing!
             </button>
         </form>
+    {% else %}
+        <a href="/cancel/{{ purchase_id }}" class="thanks-button">
+            Cancel last payment
+        </a>
     {% endif %}
-    <a href="/cancel/{{ purchase_id }}" class="thanks-button">
-        Cancel last payment
-    </a>
     <a href="/" class="thanks-button">
         Go to new Purchase
     </a>

@@ -173,7 +173,7 @@ def index():
             if response['status'] == 'SUCCESS':
                 purchase_id = write_purchase_to_db(body)
                 write_card_token_to_db(purchase_id, response['token'])
-                context['buy_one_more'] = True
+                context['card_payment'] = True
 
         else:
             body['payment'].update({
