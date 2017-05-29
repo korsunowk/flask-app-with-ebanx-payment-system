@@ -174,6 +174,7 @@ def index():
                 purchase_id = write_purchase_to_db(body)
                 write_card_token_to_db(purchase_id, response['token'])
                 context['card_payment'] = True
+                context['amount'] = amount_total
 
         else:
             body['payment'].update({
@@ -255,10 +256,13 @@ def buy_one_more(purchase_id):
 
     if response['status'] == 'SUCCESS':
         purchase_id = write_purchase_to_db(body)
+        write_purchase_hash_to_db(purchase=purchase_id,
+                                  hash_code=response['payment']['hash'])
 
         return render_template('thanks_page.html',
                                card_payment=True, second_payment=True,
-                               purchase_id=purchase_id)
+                               purchase_id=purchase_id,
+                               amount=body['payment']['amount_total'])
 
     return redirect(url_for('index'))
 
@@ -363,10 +367,10 @@ def cancel_payment(purchase_id):
     return redirect(url_for('index'))
 
 
-@app.route('/refund/<purchase_id>')
+@app.route('/refund/<purchase_id>', methods=['POST', 'GET'])
 def refund_payment(purchase_id):
     """
-    Function for refunds the sales order completely/partially
+    Function for refunds the sales order completely/partial
     :param purchase_id: INT id of purchase object in database
     """
     purchase_hash = get_purchase_hash_from_db(purchase_id)
@@ -378,6 +382,9 @@ def refund_payment(purchase_id):
         'amount': get_purchase_amount_from_db(purchase_id),
         'description': 'Refund payment on guitar'
     }
+
+    if request.method == 'POST':
+        body['amount'] = request.form.get('partial-refund')
 
     response = get_response_from_api(body=body,
                                      url=settings.EBANX_API_REFUND_URL,

@@ -24,6 +24,14 @@
             Refund last payment
         </a>
 
+        <form action="/refund/{{ purchase_id }}" method="post">
+            <label for="partial-refund">
+                Amount to refund:
+                <input type="number" min="1" max="{{ amount }}" name="partial-refund" id="partial-refund">
+            </label>
+            <button type="submit">Partial refund last payment</button>
+        </form>
+
     {% else %}
         <a href="/cancel/{{ purchase_id }}" class="thanks-button">
             Cancel last payment
