@@ -1,119 +1,71 @@
 from flask import Flask, render_template, \
-    request, json, redirect, url_for, g
+    request, json, redirect, url_for
+from flask_sqlalchemy import SQLAlchemy
 
 import requests
 import binascii
 import os
-import sqlite3
 
 import settings
 
 app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] \
+    = 'sqlite:////' + settings.PROJECT_DIR + settings.DATABASE
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
+db = SQLAlchemy(app)
 
 
-def get_db():
+class Purchase(db.Model):
     """
-    Helper function for create connection with database
-    and return database connection object for use one
-    :return: database connection object
+    Simple model for purchase object
     """
-    db = getattr(g, '_database', None)
-    if not db:
-        db = g._database = sqlite3.connect(settings.DATABASE)
-    return db
+    id = db.Column(db.Integer, primary_key=True)
+    purchase_hash = db.Column(db.String(255), unique=True)
+    card_token = db.Column(db.String(255))
+    operation = db.Column(db.String(80))
+    email = db.Column(db.String(80))
+    name = db.Column(db.String(80))
+    country = db.Column(db.String(80))
+    document = db.Column(db.String(80))
+    zipcode = db.Column(db.Integer)
+    address = db.Column(db.String(80))
+    street_number = db.Column(db.Integer)
+    city = db.Column(db.String(80))
+    state = db.Column(db.String(80))
+    phone_number = db.Column(db.Integer)
+    birth_date = db.Column(db.String(80))
+    currency_code = db.Column(db.String(80))
+    amount_total = db.Column(db.Float)
+    payment_type_code = db.Column(db.String(80))
 
+    def __init__(self, operation, email, name,
+                 country, document, zipcode, address, street_number, city,
+                 state, phone_number, birth_date, currency_code,
+                 amount_total, payment_type_code,
+                 card_token='', purchase_hash=''):
 
-@app.teardown_appcontext
-def close_connection(exception):
-    """
-    Helper function for close connection with database
-    :param exception: exception which send flask app
-    """
-    db = getattr(g, '_database', None)
-    if db:
-        db.close()
+        self.purchase_hash = purchase_hash
+        self.card_token = card_token
+        self.operation = operation
+        self.email = email
+        self.name = name
+        self.country = country
+        self.document = document
+        self.zipcode = zipcode
+        self.address = address
+        self.street_number = street_number
+        self.city = city
+        self.state = state
+        self.phone_number = phone_number
+        self.birth_date = birth_date
+        self.currency_code = currency_code
+        self.amount_total = amount_total
+        self.payment_type_code = payment_type_code
 
+    def __str__(self):
+        return "Purchase %d" % self.id
 
-def write_purchase_hash_to_db(purchase, hash_code):
-    """
-    Function for write new purchase hash code to database
-    """
-    cursor = get_db().cursor()
-    sql = "UPDATE purchases SET purchase_hash='{0}' WHERE ID={1}"\
-          .format(hash_code, purchase)
-    cursor.execute(sql)
-    get_db().commit()
-
-
-def write_purchase_to_db(data):
-    """
-    Function for write new purchase information to database
-    :param data: all information about purchase
-    """
-    payment = data.get('payment')
-    cursor = get_db().cursor()
-    sql = "INSERT INTO purchases (operation, email, name, " \
-          "country, document, zipcode, address, street_number, " \
-          "city, state, phone_number, birth_date, " \
-          "currency_code, amount_total, payment_type_code)" \
-          " VALUES ('{0}', '{1}', '{2}', '{3}'," \
-          "'{4}', '{5}', '{6}', '{7}'," \
-          "'{8}', '{9}', '{10}', '{11}'," \
-          "'{12}', '{13}', '{14}')"\
-        .format(
-            data.get('operation'), payment.get('email'), payment.get('name'),
-            payment.get('country'), payment.get('document'),
-            payment.get('zipcode'), payment.get('address'),
-            payment.get('street_number'), payment.get('city'),
-            payment.get('state'), payment.get('phone_number'),
-            payment.get('birth_date'), payment.get('currency_code'),
-            payment.get('amount_total'), payment.get('payment_type_code')
-        )
-    cursor.execute(sql)
-
-    return cursor.lastrowid
-
-
-@app.teardown_appcontext
-def create_database_table(exception):
-    """
-    Create initial database table for save info about purchases
-    """
-    sql = """
-        CREATE TABLE IF NOT EXISTS purchases (
-             ID INTEGER PRIMARY KEY autoincrement,
-             purchase_hash string,
-             card_token string,
-             operation string,
-             email string,
-             name string,
-             country string,
-             document string,
-             zipcode string,
-             address string,
-             street_number string,
-             city string,
-             state string,
-             phone_number string,
-             birth_date string,
-             currency_code string,
-             amount_total string,
-             payment_type_code string
-            );
-    """
-
-    get_db().execute(sql)
-    get_db().commit()
-
-
-def write_card_token_to_db(purchase_id, token):
-    """
-    Function for write new token of card to database
-    """
-    sql = "UPDATE purchases SET card_token='%s' WHERE ID=%d" \
-          % (token, purchase_id)
-    get_db().execute(sql)
-    get_db().commit()
+db.create_all()
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -122,7 +74,7 @@ def index():
     Index page of application with payment form
     """
     context = {}
-    purchase_id = None
+    purchase = None
 
     if request.method == 'POST':
         data = request.form
@@ -171,8 +123,27 @@ def index():
                                              url=settings.EBANX_API_TOKEN_URL)
 
             if response['status'] == 'SUCCESS':
-                purchase_id = write_purchase_to_db(body)
-                write_card_token_to_db(purchase_id, response['token'])
+                purchase = Purchase(
+                    card_token=response['token'],
+                    operation=body['operation'],
+                    email=body['payment']['email'],
+                    name=body['payment']['name'],
+                    country=body['payment']['country'],
+                    document=body['payment']['document'],
+                    zipcode=body['payment']['zipcode'],
+                    address=body['payment']['address'],
+                    street_number=body['payment']['street_number'],
+                    city=body['payment']['city'],
+                    state=body['payment']['state'],
+                    phone_number=body['payment']['phone_number'],
+                    birth_date=body['payment']['birth_date'],
+                    currency_code=body['payment']['currency_code'],
+                    amount_total=body['payment']['amount_total'],
+                    payment_type_code=body['payment']['payment_type_code']
+                )
+                db.session.add(purchase)
+                db.session.commit()
+
                 context['card_payment'] = True
                 context['amount'] = amount_total
 
@@ -180,33 +151,40 @@ def index():
             body['payment'].update({
                 "payment_type_code": data.get('pay-type'),
             })
-            purchase_id = write_purchase_to_db(body)
+            purchase = Purchase(
+                    operation=body['operation'],
+                    email=body['payment']['email'],
+                    name=body['payment']['name'],
+                    country=body['payment']['country'],
+                    document=body['payment']['document'],
+                    zipcode=body['payment']['zipcode'],
+                    address=body['payment']['address'],
+                    street_number=body['payment']['street_number'],
+                    city=body['payment']['city'],
+                    state=body['payment']['state'],
+                    phone_number=body['payment']['phone_number'],
+                    birth_date=body['payment']['birth_date'],
+                    currency_code=body['payment']['currency_code'],
+                    amount_total=body['payment']['amount_total'],
+                    payment_type_code=body['payment']['payment_type_code']
+                )
+            db.session.add(purchase)
+            db.session.commit()
 
         response = get_response_from_api(body=body,
                                          url=settings.EBANX_API_PAYMENT_URL)
 
         if response['status'] == 'SUCCESS':
-            write_purchase_hash_to_db(purchase=purchase_id,
-                                      hash_code=response['payment']['hash'])
-            context['purchase_id'] = purchase_id
+            purchase.purchase_hash = response['payment']['hash']
+            db.session.add(purchase)
+            db.session.commit()
+            context['purchase_id'] = purchase.id
 
             return render_template('thanks_page.html', **context)
 
         context['error'] = response['status_message']
 
     return render_template('index.html', **context)
-
-
-def get_purchase_data_from_db(purchase_id):
-    """
-    Get all information about purchase from database
-    :param purchase_id: INT id of purchase
-    :return: all information from database about that purchase
-    """
-    cursor = get_db().cursor()
-    cursor.execute(
-        "SELECT * FROM purchases WHERE ID=%s" % purchase_id)
-    return cursor.fetchone()
 
 
 def generate_merchant_payment_code():
@@ -224,30 +202,30 @@ def buy_one_more(purchase_id):
 
     :param purchase_id: INT id of purchase object in database
     """
-    data = get_purchase_data_from_db(purchase_id)
+    purchase = Purchase.query.get(purchase_id)
 
     body = {
         "integration_key": settings.INTEGRATION_KEY,
-        "operation": data[3],
+        "operation": purchase.operation,
         "mode": "full",
         "payment": {
             "merchant_payment_code": generate_merchant_payment_code(),
-            "amount_total": data[16],
-            "currency_code": data[15],
-            "name": data[5],
-            "email": data[4],
-            "birth_date": data[14],
-            "document": data[7],
-            "address": data[9],
-            "street_number": data[10],
-            "city": data[11],
-            "state": data[12],
-            "zipcode": data[8],
-            "country": data[6],
-            "phone_number": data[13],
-            "payment_type_code": data[17],
+            "amount_total": purchase.amount_total,
+            "currency_code": purchase.currency_code,
+            "name": purchase.name,
+            "email": purchase.email,
+            "birth_date": purchase.birth_date,
+            "document": purchase.document,
+            "address": purchase.address,
+            "street_number": purchase.street_number,
+            "city": purchase.city,
+            "state": purchase.state,
+            "zipcode": purchase.zipcode,
+            "country": purchase.country,
+            "phone_number": purchase.phone_number,
+            "payment_type_code": purchase.payment_type_code,
             "creditcard": {
-                "token": data[2]
+                "token": purchase.card_token
             }
         }
     }
@@ -255,14 +233,32 @@ def buy_one_more(purchase_id):
                                      url=settings.EBANX_API_PAYMENT_URL)
 
     if response['status'] == 'SUCCESS':
-        purchase_id = write_purchase_to_db(body)
-        write_purchase_hash_to_db(purchase=purchase_id,
-                                  hash_code=response['payment']['hash'])
+        new_purchase = Purchase(
+            card_token=body['payment']['creditcard'].get('token'),
+            operation=body['operation'],
+            email=body['payment']['email'],
+            name=body['payment']['name'],
+            country=body['payment']['country'],
+            document=body['payment']['document'],
+            zipcode=body['payment']['zipcode'],
+            address=body['payment']['address'],
+            street_number=body['payment']['street_number'],
+            city=body['payment']['city'],
+            state=body['payment']['state'],
+            phone_number=body['payment']['phone_number'],
+            birth_date=body['payment']['birth_date'],
+            currency_code=body['payment']['currency_code'],
+            amount_total=body['payment']['amount_total'],
+            payment_type_code=body['payment']['payment_type_code'],
+            purchase_hash=response['payment']['hash']
+        )
+        db.session.add(new_purchase)
+        db.session.commit()
 
         return render_template('thanks_page.html',
                                card_payment=True, second_payment=True,
-                               purchase_id=purchase_id,
-                               amount=body['payment']['amount_total'])
+                               purchase_id=new_purchase.id,
+                               amount=new_purchase.amount_total)
 
     return redirect(url_for('index'))
 
@@ -318,31 +314,6 @@ def refunded_page():
     return render_template('refunded_page.html')
 
 
-def get_purchase_hash_from_db(purchase_id):
-    """
-    Helper function for get purchase object from database
-
-    :param purchase_id: INT id of purchase object
-    :return: database row with purchase object
-    """
-    cursor = get_db().cursor()
-    sql = "SELECT purchase_hash FROM purchases WHERE ID=%s" % purchase_id
-    cursor.execute(sql)
-    return cursor.fetchone()[0]
-
-
-def get_purchase_amount_from_db(purchase_id):
-    """
-    Helper function for get purchase amount from database
-    :param purchase_id: INT id of purchase object
-    :return: purchase.amount from database row
-    """
-    cursor = get_db().cursor()
-    sql = "SELECT amount_total FROM purchases WHERE ID=%s" % purchase_id
-    cursor.execute(sql)
-    return cursor.fetchone()[0]
-
-
 @app.route('/cancel/<purchase_id>')
 def cancel_payment(purchase_id):
     """
@@ -350,7 +321,7 @@ def cancel_payment(purchase_id):
 
     :param purchase_id: INT id of purchase object in database
     """
-    purchase_hash = get_purchase_hash_from_db(purchase_id)
+    purchase_hash = Purchase.query.get(purchase_id).purchase_hash
 
     body = {
         'integration_key': settings.INTEGRATION_KEY,
@@ -373,13 +344,13 @@ def refund_payment(purchase_id):
     Function for refunds the sales order completely/partial
     :param purchase_id: INT id of purchase object in database
     """
-    purchase_hash = get_purchase_hash_from_db(purchase_id)
+    purchase_hash = Purchase.query.get(purchase_id).purchase_hash
 
     body = {
         'integration_key': settings.INTEGRATION_KEY,
         'operation': 'request',
         'hash': purchase_hash,
-        'amount': get_purchase_amount_from_db(purchase_id),
+        'amount': Purchase.query.get(purchase_id).amount_total,
         'description': 'Refund payment on guitar'
     }
 
