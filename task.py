@@ -216,7 +216,7 @@ def generate_merchant_payment_code():
     return binascii.hexlify(os.urandom(12)).decode('utf-8')
 
 
-@app.route('/buy_one_more/<purchase_id>', methods=['POST'])
+@app.route('/buy_one_more/<purchase_id>')
 def buy_one_more(purchase_id):
     """
     Method for buy one more staff with card token instead full info
@@ -254,7 +254,11 @@ def buy_one_more(purchase_id):
                                      url=settings.EBANX_API_PAYMENT_URL)
 
     if response['status'] == 'SUCCESS':
-        return render_template('thanks_page.html')
+        purchase_id = write_purchase_to_db(body)
+
+        return render_template('thanks_page.html',
+                               card_payment=True, second_payment=True,
+                               purchase_id=purchase_id)
 
     return redirect(url_for('index'))
 
@@ -302,6 +306,14 @@ def cancelled_page():
     return render_template('cancelled_page.html')
 
 
+@app.route('/refunded')
+def refunded_page():
+    """
+    Simple page for display info of refunded purchase
+    """
+    return render_template('refunded_page.html')
+
+
 def get_purchase_hash_from_db(purchase_id):
     """
     Helper function for get purchase object from database
@@ -311,6 +323,18 @@ def get_purchase_hash_from_db(purchase_id):
     """
     cursor = get_db().cursor()
     sql = "SELECT purchase_hash FROM purchases WHERE ID=%s" % purchase_id
+    cursor.execute(sql)
+    return cursor.fetchone()[0]
+
+
+def get_purchase_amount_from_db(purchase_id):
+    """
+    Helper function for get purchase amount from database
+    :param purchase_id: INT id of purchase object
+    :return: purchase.amount from database row
+    """
+    cursor = get_db().cursor()
+    sql = "SELECT amount_total FROM purchases WHERE ID=%s" % purchase_id
     cursor.execute(sql)
     return cursor.fetchone()[0]
 
@@ -335,6 +359,32 @@ def cancel_payment(purchase_id):
 
     if response['status'] == 'SUCCESS':
         return redirect(url_for('cancelled_page'))
+
+    return redirect(url_for('index'))
+
+
+@app.route('/refund/<purchase_id>')
+def refund_payment(purchase_id):
+    """
+    Function for refunds the sales order completely/partially
+    :param purchase_id: INT id of purchase object in database
+    """
+    purchase_hash = get_purchase_hash_from_db(purchase_id)
+
+    body = {
+        'integration_key': settings.INTEGRATION_KEY,
+        'operation': 'request',
+        'hash': purchase_hash,
+        'amount': get_purchase_amount_from_db(purchase_id),
+        'description': 'Refund payment on guitar'
+    }
+
+    response = get_response_from_api(body=body,
+                                     url=settings.EBANX_API_REFUND_URL,
+                                     method='get')
+
+    if response['status'] == 'SUCCESS':
+        return redirect(url_for('refunded_page'))
 
     return redirect(url_for('index'))
 

@@ -7,15 +7,23 @@
 </head>
 <body>
     <h1 class="thanks-header">
-        Thank You For Your Purchase!
+        Thank You For Your
+        {% if second_payment %}
+            <b>second</b>
+        {% endif %}
+        Purchase!
     </h1>
     {% if card_payment %}
-        <form action="/buy_one_more/{{ purchase_id }}" method="post">
-            <input type="hidden" name="previous">
-            <button type="submit">
+        {% if not second_payment %}
+            <a href="/buy_one_more/{{ purchase_id }}" class="thanks-button">
                 Buy one more Thing!
-            </button>
-        </form>
+            </a>
+        {% endif %}
+
+        <a href="/refund/{{ purchase_id }}" class="thanks-button">
+            Refund last payment
+        </a>
+
     {% else %}
         <a href="/cancel/{{ purchase_id }}" class="thanks-button">
             Cancel last payment
