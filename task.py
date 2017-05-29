@@ -20,7 +20,7 @@ class Purchase(db.Model):
     Simple model for purchase object
     """
     id = db.Column(db.Integer, primary_key=True)
-    purchase_hash = db.Column(db.String(255), unique=True)
+    purchase_hash = db.Column(db.String(255))
     card_token = db.Column(db.String(255))
     operation = db.Column(db.String(80))
     email = db.Column(db.String(80))
@@ -66,6 +66,48 @@ class Purchase(db.Model):
         return "Purchase %d" % self.id
 
 db.create_all()
+
+
+def save_purchase(body, card_token=''):
+    """
+    Helper function for create and save purchase object in database
+    :param body: body with all information of purchase
+    :param card_token: token of card
+    :return: new purchase object
+    """
+    purchase = Purchase(
+        card_token=card_token,
+        operation=body['operation'],
+        email=body['payment']['email'],
+        name=body['payment']['name'],
+        country=body['payment']['country'],
+        document=body['payment']['document'],
+        zipcode=body['payment']['zipcode'],
+        address=body['payment']['address'],
+        street_number=body['payment']['street_number'],
+        city=body['payment']['city'],
+        state=body['payment']['state'],
+        phone_number=body['payment']['phone_number'],
+        birth_date=body['payment']['birth_date'],
+        currency_code=body['payment']['currency_code'],
+        amount_total=body['payment']['amount_total'],
+        payment_type_code=body['payment']['payment_type_code']
+    )
+    db.session.add(purchase)
+    db.session.commit()
+
+    return purchase
+
+
+def save_purchase_hash(purchase, purchase_hash):
+    """
+    Helper function for save purchase hash to purchase    
+    :param purchase: purchase object
+    :param purchase_hash: hash field which need add to purchase 
+    """
+    purchase.purchase_hash = purchase_hash
+    db.session.add(purchase)
+    db.session.commit()
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -123,26 +165,7 @@ def index():
                                              url=settings.EBANX_API_TOKEN_URL)
 
             if response['status'] == 'SUCCESS':
-                purchase = Purchase(
-                    card_token=response['token'],
-                    operation=body['operation'],
-                    email=body['payment']['email'],
-                    name=body['payment']['name'],
-                    country=body['payment']['country'],
-                    document=body['payment']['document'],
-                    zipcode=body['payment']['zipcode'],
-                    address=body['payment']['address'],
-                    street_number=body['payment']['street_number'],
-                    city=body['payment']['city'],
-                    state=body['payment']['state'],
-                    phone_number=body['payment']['phone_number'],
-                    birth_date=body['payment']['birth_date'],
-                    currency_code=body['payment']['currency_code'],
-                    amount_total=body['payment']['amount_total'],
-                    payment_type_code=body['payment']['payment_type_code']
-                )
-                db.session.add(purchase)
-                db.session.commit()
+                purchase = save_purchase(body, card_token=response['token'])
 
                 context['card_payment'] = True
                 context['amount'] = amount_total
@@ -151,33 +174,13 @@ def index():
             body['payment'].update({
                 "payment_type_code": data.get('pay-type'),
             })
-            purchase = Purchase(
-                    operation=body['operation'],
-                    email=body['payment']['email'],
-                    name=body['payment']['name'],
-                    country=body['payment']['country'],
-                    document=body['payment']['document'],
-                    zipcode=body['payment']['zipcode'],
-                    address=body['payment']['address'],
-                    street_number=body['payment']['street_number'],
-                    city=body['payment']['city'],
-                    state=body['payment']['state'],
-                    phone_number=body['payment']['phone_number'],
-                    birth_date=body['payment']['birth_date'],
-                    currency_code=body['payment']['currency_code'],
-                    amount_total=body['payment']['amount_total'],
-                    payment_type_code=body['payment']['payment_type_code']
-                )
-            db.session.add(purchase)
-            db.session.commit()
+            purchase = save_purchase(body)
 
         response = get_response_from_api(body=body,
                                          url=settings.EBANX_API_PAYMENT_URL)
 
         if response['status'] == 'SUCCESS':
-            purchase.purchase_hash = response['payment']['hash']
-            db.session.add(purchase)
-            db.session.commit()
+            save_purchase_hash(purchase, response['payment']['hash'])
             context['purchase_id'] = purchase.id
 
             return render_template('thanks_page.html', **context)
@@ -233,27 +236,9 @@ def buy_one_more(purchase_id):
                                      url=settings.EBANX_API_PAYMENT_URL)
 
     if response['status'] == 'SUCCESS':
-        new_purchase = Purchase(
-            card_token=body['payment']['creditcard'].get('token'),
-            operation=body['operation'],
-            email=body['payment']['email'],
-            name=body['payment']['name'],
-            country=body['payment']['country'],
-            document=body['payment']['document'],
-            zipcode=body['payment']['zipcode'],
-            address=body['payment']['address'],
-            street_number=body['payment']['street_number'],
-            city=body['payment']['city'],
-            state=body['payment']['state'],
-            phone_number=body['payment']['phone_number'],
-            birth_date=body['payment']['birth_date'],
-            currency_code=body['payment']['currency_code'],
-            amount_total=body['payment']['amount_total'],
-            payment_type_code=body['payment']['payment_type_code'],
-            purchase_hash=response['payment']['hash']
-        )
-        db.session.add(new_purchase)
-        db.session.commit()
+        new_purchase = save_purchase(
+            body, card_token=body['payment']['creditcard'].get('token'))
+        save_purchase_hash(new_purchase, response['payment']['hash'])
 
         return render_template('thanks_page.html',
                                card_payment=True, second_payment=True,
