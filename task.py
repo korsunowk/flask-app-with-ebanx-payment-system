@@ -10,7 +10,7 @@ import settings
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] \
-    = 'sqlite:////' + settings.PROJECT_DIR + settings.DATABASE
+    = 'sqlite:////' + os.path.join(settings.PROJECT_DIR, settings.DATABASE)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
 db = SQLAlchemy(app)
 
