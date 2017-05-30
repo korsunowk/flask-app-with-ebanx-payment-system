@@ -21,6 +21,12 @@
                 300$
             </span>
         </div>
+        <div class="block-amount">
+            <label for="amount">
+                Amount:
+                <input type="number" min="1" max="10" id="amount" name="amount" value="1">
+            </label>
+        </div>
         <input type="hidden" value="300" name="price">
         <br>
         <div class="block-currency">
@@ -60,7 +66,7 @@
             <input type="email" placeholder="email" name="email">
             <label for="phone">
                 Phone:
-                <input type="text" name="phone">
+                <input type="number" name="phone">
             </label>
         </div>
         <div class="block-address">
@@ -70,7 +76,7 @@
             </label>
             <label for="street-number">
                 Street number:
-                <input type="text" name="street-number">
+                <input type="number" name="street-number">
             </label>
             <br>
             <label for="city">
@@ -79,7 +85,7 @@
             </label>
             <label for="zip">
                 ZIP:
-                <input type="text" name="zip">
+                <input type="number" name="zip">
             </label>
             <br>
             <label for="state">

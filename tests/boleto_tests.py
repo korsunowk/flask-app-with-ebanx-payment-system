@@ -1,8 +1,10 @@
-import unittest
-import os
 import binascii
 import requests
 import json
+import os
+import unittest
+import sys
+from pathlib import Path
 
 
 class BoletoTestCase(unittest.TestCase):
@@ -13,7 +15,9 @@ class BoletoTestCase(unittest.TestCase):
         """
         Set up initial values for tests
         """
+        import task
 
+        self.client = task.app.test_client()
         self.key = 'test_ik_lTp-YAT16nvn74DXKFFoYw'
         self.url = 'https://sandbox.ebanx.com/ws/direct'
 
@@ -38,6 +42,24 @@ class BoletoTestCase(unittest.TestCase):
                 'amount_total': '300',
                 'payment_type_code': "boleto"
             }
+        }
+
+        self.view_body_boleto = {
+            'email': 'email@email.com',
+            'name': 'name',
+            "country": 'br',
+            "cpf": '853.513.468-93',
+            "zip": "134134",
+            "address": "address",
+            "street-number": "134",
+            "city": "Maracanaú",
+            "state": "CE",
+            "phone": "380980905082",
+            "bdate": "12/04/1979",
+            "currency": "BRL",
+            "amount": "1",
+            "pay-type": "boleto",
+            "price": "300"
         }
 
     def setNewMerchCode(self):
@@ -100,6 +122,35 @@ class BoletoTestCase(unittest.TestCase):
         response = json.loads(response.content.decode('utf-8'))
         self.assertEqual(response['status'], 'ERROR')
 
+    def testGetIndexPage(self):
+        """
+        Test method for testing GET index page of application
+        """
+        content = self.client.get('/')
+        self.assertEqual(content.status_code,  200)
+
+    def testSuccessfulViewPayment(self):
+        """
+        Test successful payment with boleto
+        """
+        content = self.client.post('/', data=self.view_body_boleto)
+        self.assertEqual(content.status_code, 200)
+
+    def testSuccessfulViewCancelPayment(self):
+        """
+        Test successful cancel payment
+        """
+        content = self.client.post('/', data=self.view_body_boleto)
+        content = content.data.decode('utf-8')
+        href = content[
+               content.find('/cancel/'):content.find('" data-type="cancel"')
+               ]
+        content = self.client.get(href)
+        self.assertTrue("cancelled" in content.data.decode('utf-8'))
+        self.assertEqual(content.status_code, 302)
+
 
 if __name__ == '__main__':
+    top = Path(__file__).resolve().parents[1]
+    sys.path.append(str(top))
     unittest.main()
