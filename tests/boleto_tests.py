@@ -143,8 +143,7 @@ class BoletoTestCase(unittest.TestCase):
         content = self.client.post('/', data=self.view_body_boleto)
         content = content.data.decode('utf-8')
         href = content[
-               content.find('/cancel/'):content.find('" data-type="cancel"')
-               ]
+           content.find('/cancel/'):content.find('" data-type="cancel"')]
         content = self.client.get(href)
         self.assertTrue("cancelled" in content.data.decode('utf-8'))
         self.assertEqual(content.status_code, 302)

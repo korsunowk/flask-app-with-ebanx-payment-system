@@ -138,13 +138,28 @@ class CreditCardTestCase(unittest.TestCase):
         response = json.loads(response.content.decode('utf-8'))
         self.assertEqual(response['status'], 'ERROR')
 
-    def testSuccessfulPayment(self):
+    def testSuccessfulPaymentView(self):
         """
         Test for successful payment View with credit card
         """
         content = self.client.post('/', data=self.view_body_creditcard)
         self.assertTrue("Thanks page" in content.data.decode('utf-8'))
         self.assertEqual(content.status_code, 200)
+
+    def testSuccessfulMultiplePaymentView(self):
+        """
+        Test for multiple successful payment View
+        """
+        data = self.view_body_creditcard
+        data['amount'] = 2
+        content = self.client.post('/', data=data)
+        self.assertTrue("Thanks page" in content.data.decode('utf-8'))
+        self.assertEqual(content.status_code, 200)
+        content = content.data.decode('utf-8')
+        price = content[
+            content.find('max="'): content.find('" name="partial-refund"')]
+        price = price.replace('max="', '')
+        self.assertEqual(int(price), int(data['price']) * int(data['amount']))
 
     def testBuyOneMorePayment(self):
         """
@@ -154,9 +169,8 @@ class CreditCardTestCase(unittest.TestCase):
         content = self.client.post('/', data=self.view_body_creditcard)
         content = content.data.decode('utf-8')
         href = content[
-                   content.find('/buy_one_more/')
-                   :content.find('" data-type="buy-one-more"')
-               ]
+           content.find('/buy_one_more/')
+           :content.find('" data-type="buy-one-more"')]
         content = self.client.get(href)
         self.assertEqual(content.status_code, 200)
         content = content.data.decode('utf-8')
@@ -171,9 +185,7 @@ class CreditCardTestCase(unittest.TestCase):
         self.assertEqual(content.status_code, 200)
         content = content.data.decode('utf-8')
         href = content[
-                   content.find('/refund/')
-                   :content.find('" data-type="refund"')
-               ]
+           content.find('/refund/'):content.find('" data-type="refund"')]
         content = self.client.get(href)
         self.assertEqual(content.status_code, 302)
         content = content.data.decode('utf-8')
