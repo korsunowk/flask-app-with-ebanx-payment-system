@@ -205,6 +205,17 @@ class CreditCardTestCase(unittest.TestCase):
         content = content.data.decode('utf-8')
         self.assertTrue("refunded" in content)
 
+    def testSuccessfulMexicanPayment(self):
+        """
+        Test for successful payment with Mexican country and currency
+        """
+        data = self.view_body_creditcard
+        data['country'] = 'mx'
+        data['currency'] = 'MXN'
+        data['email'] = 'mexican_email@email.mx'
+        content = self.client.post('/', data=data)
+        self.assertTrue("Thanks page" in content.data.decode('utf-8'))
+        self.assertEqual(content.status_code, 200)
 
 if __name__ == '__main__':
     top = Path(__file__).resolve().parents[1]
