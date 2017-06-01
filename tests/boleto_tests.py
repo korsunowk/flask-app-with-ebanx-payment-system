@@ -59,7 +59,8 @@ class BoletoTestCase(unittest.TestCase):
             "currency": "BRL",
             "amount": "1",
             "pay-type": "boleto",
-            "price": "300"
+            "price": "300",
+            "error-message": 'None'
         }
 
     def setNewMerchCode(self):
