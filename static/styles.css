@@ -17,7 +17,7 @@ label {
     margin-left: 15px;
 }
 
-button#submit, .thanks-button {
+button#btnSubmit, .thanks-button {
     width: 150px;
     height: 40px;
     font-size: 16px;
@@ -26,7 +26,7 @@ button#submit, .thanks-button {
     margin-left: 15px;
 }
 
-button#submit:not([disabled]), .thanks-button {
+button#btnSubmit:not([disabled]), .thanks-button {
     cursor: pointer;
 }
 

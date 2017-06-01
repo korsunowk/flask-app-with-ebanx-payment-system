@@ -3,20 +3,20 @@
     <div class="block-card">
         <label for="card-number">
             Card number:
-            <input type="text" id="card-number" maxlength="16" name="card-number">
+            <input type="text" id="card-number" maxlength="16">
         </label>
         <label for="card-name">
             Card name:
-            <input type="text" id="card-name" name="card-name">
+            <input type="text" id="card-name">
         </label>
         <br>
         <label for="card-cvv">
             CVV:
-            <input type="number" id="card-cvv" name="card-cvv">
+            <input type="number" id="card-cvv">
         </label>
         <label for="card-date">
             MM/YYYY
-            <input type="text" id="card-date" name="card-date">
+            <input type="text" id="card-date">
         </label>
         <br><br>
         <label for="card-type">
@@ -32,5 +32,7 @@
                 <option value="hipercard">Hipercard credit card</option>
             </select>
         </label>
+        <input type="hidden" name="card-token" id="card-token" value="None">
+        <input type="hidden" name="error-message" id="error-message" value="None">
     </div>
 </div>

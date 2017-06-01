@@ -12,7 +12,7 @@
     <hr>
     <img src="/static/guitar.png" alt="guitar" height="150" width="500"/>
     <hr>
-    <form action="" method="POST">
+    <form action="" method="POST" name="pay_form">
         <div class="block-price">
             <span>
                 Price of staff:
@@ -28,6 +28,7 @@
             </label>
         </div>
         <input type="hidden" value="300" name="price">
+        <input type="hidden" value="{{ public_key }}" id="public-key">
         <br>
         <div class="block-currency">
             <label for="currency">Currency</label>
@@ -118,8 +119,10 @@
             </select>
         </label>
         <br>
-        <button type="submit" id="submit" disabled="disabled">Submit</button>
+        <button type="submit" id="btnSubmit" disabled="disabled">Submit</button>
     </form>
     <hr>
+    <script type="text/javascript" src="https://js.ebanx.com/ebanx-1.4.min.js"></script>
+    <script type="text/javascript" src="/static/ebanx-config.js"></script>
 </body>
 </html>

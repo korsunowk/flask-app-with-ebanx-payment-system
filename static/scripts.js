@@ -15,23 +15,26 @@ $(document).ready(function() {
                         if ($('.open').get(0)) {
                             $('.open').remove();
                         }
-                        $('#submit').before(data.template);
-                        $('#submit').removeAttr('disabled');
+                        $('#btnSubmit').before(data.template);
+                        $('#btnSubmit').removeAttr('disabled');
                     }
                 }
             })
         }
         else if (type === 'boleto') {
             $('.open').remove();
-            $('#submit').removeAttr('disabled');
+            $('#btnSubmit').removeAttr('disabled');
         }
         else {
             $('.open').remove();
-            $('#submit').attr('disabled', 'disabled');
+            $('#btnSubmit').attr('disabled', 'disabled');
         }
     });
 
-    $('#submit').on('click', function () {
+    $('#btnSubmit').on('click', function (e) {
+        $(this).text('Loading...');
+        $(this).attr('disabled', 'disabled');
+
         var valid = true;
 
         $.each($('form').serializeArray(), function (i, val) {
@@ -43,6 +46,25 @@ $(document).ready(function() {
             alert('Fill all inputs, please.')
         }
 
-        return valid;
-    })
+        EBANX.card.createToken({
+            card_number: document.getElementById('card-number').value,
+            card_name: document.getElementById('card-name').value,
+            card_due_date: document.getElementById('card-date').value,
+            card_cvv: document.getElementById('card-cvv').value
+        }, createTokenCallback);
+
+        e.preventDefault();
+        e.stopPropagation();
+        return false;
+    });
+
+var createTokenCallback = function(ebanxResponse) {
+    if (ebanxResponse.error.err)
+        document.getElementById('error-message').value = ebanxResponse.error.err.message;
+    else
+        document.getElementById('card-token').value = ebanxResponse.data.token;
+
+    document.pay_form.submit();
+  };
+
 });

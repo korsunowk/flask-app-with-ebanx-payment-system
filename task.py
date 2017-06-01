@@ -115,77 +115,68 @@ def index():
     """
     Index page of application with payment form
     """
-    context = {}
-    purchase = None
+    context = {
+        'public_key': settings.PUBLIC_INTEGRATION_KEY
+    }
 
     if request.method == 'POST':
         data = request.form
 
-        merchant_payment_code = generate_merchant_payment_code()
-        amount_total = int(data.get('price')) * int(data.get('amount'))
-        body = {
-            'integration_key': settings.INTEGRATION_KEY,
-            'operation': 'request',
-            'payment': {
-                "email": data.get('email'),
-                "name": data.get('name'),
-                "country": data.get('country'),
-                "document": data.get('cpf'),
-                "zipcode": data.get('zip'),
-                "address": data.get('address'),
-                "street_number": data.get('street-number'),
-                "city": data.get('city'),
-                "state": data.get('state'),
-                "phone_number": data.get('phone'),
-                "birth_date": data.get('bdate'),
+        if data.get('error-message') == 'None':
+            merchant_payment_code = generate_merchant_payment_code()
+            amount_total = int(data.get('price')) * int(data.get('amount'))
+            body = {
+                'integration_key': settings.INTEGRATION_KEY,
+                'operation': 'request',
+                'payment': {
+                    "email": data.get('email'),
+                    "name": data.get('name'),
+                    "country": data.get('country'),
+                    "document": data.get('cpf'),
+                    "zipcode": data.get('zip'),
+                    "address": data.get('address'),
+                    "street_number": data.get('street-number'),
+                    "city": data.get('city'),
+                    "state": data.get('state'),
+                    "phone_number": data.get('phone'),
+                    "birth_date": data.get('bdate'),
 
-                "merchant_payment_code": merchant_payment_code,
-                "currency_code": data.get('currency'),
-                'amount_total': amount_total,
-            }
-        }
-        if data.get('pay-type') == 'credit-card':
-            body['payment'].update({
-                "payment_type_code": data.get('card-type'),
-                "creditcard": {
-                    'card_number': data.get('card-number'),
-                    'card_name': data.get('card-name'),
-                    'card_due_date': data.get('card-date'),
-                    'card_cvv': data.get('card-cvv')
+                    "merchant_payment_code": merchant_payment_code,
+                    "currency_code": data.get('currency'),
+                    'amount_total': amount_total,
                 }
-            })
-
-            reccuryng_body = {
-                "integration_key": settings.INTEGRATION_KEY,
-                "payment_type_code": data.get('card-type'),
-                "creditcard": body['payment']['creditcard']
             }
+            if data.get('pay-type') == 'credit-card':
+                body['payment'].update({
+                    "payment_type_code": data.get('card-type'),
+                    "creditcard": {
+                        'token': data.get('card-token')
+                    }
+                })
 
-            response = get_response_from_api(body=reccuryng_body,
-                                             url=settings.EBANX_API_TOKEN_URL)
-
-            if response['status'] == 'SUCCESS':
-                purchase = save_purchase(body, card_token=response['token'])
-
+                purchase = save_purchase(body, data.get('card-token'))
                 context['card_payment'] = True
                 context['amount'] = amount_total
 
+            else:
+                body['payment'].update({
+                    "payment_type_code": data.get('pay-type'),
+                })
+                purchase = save_purchase(body)
+
+            response \
+                = get_response_from_api(body=body,
+                                        url=settings.EBANX_API_PAYMENT_URL)
+
+            if response['status'] == 'SUCCESS':
+                save_purchase_hash(purchase, response['payment']['hash'])
+                context['purchase_id'] = purchase.id
+
+                return render_template('thanks_page.html', **context)
+
+            context['error'] = response['status_message']
         else:
-            body['payment'].update({
-                "payment_type_code": data.get('pay-type'),
-            })
-            purchase = save_purchase(body)
-
-        response = get_response_from_api(body=body,
-                                         url=settings.EBANX_API_PAYMENT_URL)
-
-        if response['status'] == 'SUCCESS':
-            save_purchase_hash(purchase, response['payment']['hash'])
-            context['purchase_id'] = purchase.id
-
-            return render_template('thanks_page.html', **context)
-
-        context['error'] = response['status_message']
+            context['error'] = data.get('error-message')
 
     return render_template('index.html', **context)
 
