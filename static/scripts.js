@@ -45,12 +45,15 @@ $(document).ready(function() {
         if (!valid) {
             alert('Fill all inputs, please.')
         }
-
+        if ($('#pay-type').val() == 'boleto'){
+            $('form[name="pay_form"]').submit();
+            return true;
+        }
         EBANX.card.createToken({
-            card_number: document.getElementById('card-number').value,
-            card_name: document.getElementById('card-name').value,
-            card_due_date: document.getElementById('card-date').value,
-            card_cvv: document.getElementById('card-cvv').value
+            card_number: $('#card-number').val(),
+            card_name: $('#card-name').val(),
+            card_due_date: $('#card-date').val(),
+            card_cvv: $('#card-cvv').val()
         }, createTokenCallback);
 
         e.preventDefault();
@@ -60,11 +63,11 @@ $(document).ready(function() {
 
 var createTokenCallback = function(ebanxResponse) {
     if (ebanxResponse.error.err)
-        document.getElementById('error-message').value = ebanxResponse.error.err.message;
+        $('#error-message').val(ebanxResponse.error.err.message);
     else
-        document.getElementById('card-token').value = ebanxResponse.data.token;
+        $('#card-token').val(ebanxResponse.data.token);
 
-    document.pay_form.submit();
+    $('form[name="pay_form"]').submit();
   };
 
 });
