@@ -67,10 +67,15 @@ class CreditCardTestCase(unittest.TestCase):
             "pay-type": "credit-card",
             "price": "300",
             "card-type": "visa",
-            'card-number': '4242424242424242',
-            'card-name': "Test card name",
-            'card-date': "12/2020",
-            'card-cvv': "123"
+            "error-message": 'None',
+            "card-token": 'None'
+        }
+
+        self.test_credit_card = {
+            'card_number': '4242424242424242',
+            'card_name': "Test card name",
+            'card_due_date': "12/2020",
+            'card_cvv': "123"
         }
 
     def setNewMerchCode(self):
@@ -138,12 +143,29 @@ class CreditCardTestCase(unittest.TestCase):
         response = json.loads(response.content.decode('utf-8'))
         self.assertEqual(response['status'], 'ERROR')
 
+    def generateTestCardToken(self):
+        import settings
+
+        body = {
+            'integration_key': settings.INTEGRATION_KEY,
+            'payment_type_code': 'visa',
+            'creditcard': self.test_credit_card
+        }
+        content = requests.post(url=settings.EBANX_API_TOKEN_URL,
+                                data=json.dumps(body))
+        content = json.loads(content.content.decode('utf-8'))
+        return content['token']
+
     def testSuccessfulPaymentView(self):
         """
         Test for successful payment View with credit card
         """
+        card_token = self.generateTestCardToken()
+        self.view_body_creditcard['card-token'] = card_token
+
         content = self.client.post('/', data=self.view_body_creditcard)
         self.assertTrue("Thanks page" in content.data.decode('utf-8'))
+
         self.assertEqual(content.status_code, 200)
 
     def testSuccessfulMultiplePaymentView(self):
@@ -152,6 +174,10 @@ class CreditCardTestCase(unittest.TestCase):
         """
         data = self.view_body_creditcard
         data['amount'] = 2
+
+        card_token = self.generateTestCardToken()
+        data['card-token'] = card_token
+
         content = self.client.post('/', data=data)
         self.assertTrue("Thanks page" in content.data.decode('utf-8'))
         self.assertEqual(content.status_code, 200)
@@ -166,6 +192,9 @@ class CreditCardTestCase(unittest.TestCase):
         Test for successful buy one more payment with card token 
         instead of fully information about cliend and card
         """
+        card_token = self.generateTestCardToken()
+        self.view_body_creditcard['card-token'] = card_token
+
         content = self.client.post('/', data=self.view_body_creditcard)
         content = content.data.decode('utf-8')
         href = content[
@@ -181,6 +210,9 @@ class CreditCardTestCase(unittest.TestCase):
         """
         Test for completely refund of successful payment with credit card
         """
+        card_token = self.generateTestCardToken()
+        self.view_body_creditcard['card-token'] = card_token
+
         content = self.client.post('/', data=self.view_body_creditcard)
         self.assertEqual(content.status_code, 200)
         content = content.data.decode('utf-8')
@@ -195,7 +227,11 @@ class CreditCardTestCase(unittest.TestCase):
         """
         Test for partial refund of successful payment with credit card
         """
-        content = self.client.post('/', data=self.view_body_creditcard)
+        card_token = self.generateTestCardToken()
+        self.view_body_creditcard['card-token'] = card_token
+
+        content = self.client.post('/',
+                                   data=self.view_body_creditcard)
         self.assertTrue(content.status_code, 200)
         content = content.data.decode('utf-8')
         href = content[content.find('action="'): content.find('" method')]
@@ -213,6 +249,10 @@ class CreditCardTestCase(unittest.TestCase):
         data['country'] = 'mx'
         data['currency'] = 'MXN'
         data['email'] = 'mexican_email@email.mx'
+
+        card_token = self.generateTestCardToken()
+        data['card-token'] = card_token
+
         content = self.client.post('/', data=data)
         self.assertTrue("Thanks page" in content.data.decode('utf-8'))
         self.assertEqual(content.status_code, 200)
