@@ -164,9 +164,8 @@ def index():
                 })
                 purchase = save_purchase(body)
 
-            response \
-                = get_response_from_api(body=body,
-                                        url=settings.EBANX_API_PAYMENT_URL)
+            response = get_response_from_api(
+                body=body, url=settings.EBANX_API_PAYMENT_URL)
 
             if response['status'] == 'SUCCESS':
                 save_purchase_hash(purchase, response['payment']['hash'])
@@ -223,8 +222,8 @@ def buy_one_more(purchase_id):
             }
         }
     }
-    response = get_response_from_api(body=body,
-                                     url=settings.EBANX_API_PAYMENT_URL)
+    response = get_response_from_api(
+        body=body, url=settings.EBANX_API_PAYMENT_URL)
 
     if response['status'] == 'SUCCESS':
         new_purchase = save_purchase(
@@ -304,9 +303,8 @@ def cancel_payment(purchase_id):
         'hash': purchase_hash
     }
 
-    response = get_response_from_api(body=body,
-                                     url=settings.EBANX_API_CANCEL_URL,
-                                     method='get')
+    response = get_response_from_api(
+        body=body, url=settings.EBANX_API_CANCEL_URL, method='get')
 
     if response['status'] == 'SUCCESS':
         return redirect(url_for('cancelled_page'))
@@ -333,9 +331,8 @@ def refund_payment(purchase_id):
     if request.method == 'POST':
         body['amount'] = request.form.get('partial-refund')
 
-    response = get_response_from_api(body=body,
-                                     url=settings.EBANX_API_REFUND_URL,
-                                     method='get')
+    response = get_response_from_api(
+        body=body, url=settings.EBANX_API_REFUND_URL, method='get')
 
     if response['status'] == 'SUCCESS':
         return redirect(url_for('refunded_page'))
