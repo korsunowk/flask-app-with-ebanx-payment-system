@@ -1,7 +1,7 @@
 import os
 
 INTEGRATION_KEY = 'private key'
-PUBLIC_INTEGRATION_KEY = 'test_pk_v8cZmcHmdqBf4eEENPzbFw'
+PUBLIC_INTEGRATION_KEY = 'public key'
 EBANX_API_PAYMENT_URL = 'https://sandbox.ebanx.com/ws/direct'
 EBANX_API_CANCEL_URL = 'https://sandbox.ebanx.com/ws/cancel'
 EBANX_API_TOKEN_URL = 'https://sandbox.ebanx.com/ws/token'
