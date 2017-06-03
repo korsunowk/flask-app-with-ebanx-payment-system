@@ -18,7 +18,7 @@ class BoletoTestCase(unittest.TestCase):
         import task
 
         self.client = task.app.test_client()
-        self.key = 'test_ik_lTp-YAT16nvn74DXKFFoYw'
+        self.key = 'private key'
         self.url = 'https://sandbox.ebanx.com/ws/direct'
 
         self.body = {
